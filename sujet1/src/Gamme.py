@@ -28,8 +28,8 @@ class Gamme:
 		f.close()
 		
 		wavfile.write('son.wav',self.fe,numpy.array(signal))
-		self.wavplay(signal,self.fe)
-		print signal[:24]
+		signal2 = [v/100000. for v in signal]
+		self.wavplay(signal2,self.fe)
 		#samples=toByte(signal); /* conversion en bytes */
 		#play(samples);
 	
