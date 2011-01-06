@@ -20,7 +20,7 @@ class Gamme:
 		transition = self.cloche(fr[0])
 		signal = []
 		for j in xrange(33076):
-			signal.append( int( (2.0 ** 15.0) * transition[j] ) )
+			signal.append( int( (2.0 ** 15.0) * transition[j] ) / 100000. )
 		
 		f = open('signal.txt','w')
 		for k in xrange(len(signal)):
@@ -28,8 +28,7 @@ class Gamme:
 		f.close()
 		
 		wavfile.write('son.wav',self.fe,numpy.array(signal))
-		signal2 = [v/100000. for v in signal]
-		self.wavplay(signal2,self.fe)
+		self.wavplay(signal,self.fe)
 		#samples=toByte(signal); /* conversion en bytes */
 		#play(samples);
 	
