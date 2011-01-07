@@ -12,38 +12,31 @@ class Gamme:
 		self.f0 = f0
 		self.t = t
 		
-		self.notes_names = ['la','si','do','do#','re','re#','mi','fa','fa#','sol','sol#']
+		self.notes_names = ['la','la#','si','do','do#','re','re#','mi','fa','fa#','sol','sol#']
+		
+		self.durees = {}
+		self.setDurees(0.5) # Une noire dure 0.5 secondes
 		
 		self.fr = []
 		self.notes = {}
 		for i in xrange(len(self.notes_names)):
 			self.fr.append( self.f0 * (2.0 ** (i/12.0)) ) # Toutes les fréquences en ordre croissant dans une liste
 			self.notes[self.notes_names[i]] = self.fr[i]  # Fréquences des notes, note par note (dans un dico)
-			
-	def jouerMusique(self):
-		
-		noire = 0.5
-		blanche = 2*noire
-		ronde = 2*blanche
-		croche = noire/2.
-		double_croche = croche/2.
-		air_notes = [
-			('do',noire),
-			('do',noire),
-			('do',noire),
-			('re',noire),
-			('mi',blanche),
-			('re',blanche),
-			('do',noire),
-			('mi',noire),
-			('re',noire),
-			('re',noire),
-			('do',noire)
-		]
-		
-		# On calcul les signaux à l'avance pour que la lecture soit fluide
-		air_signals = [self.cloche(self.notes[note],duree) for (note,duree) in air_notes]
-		self.play(air_signals,self.fe)
+	
+	def setDurees(self,noire=0.5):
+		self.durees['noire'] = noire
+		self.durees['blanche'] = 2 * self.durees['noire']
+		self.durees['ronde'] = 2 * self.durees['blanche']
+		self.durees['croche'] = self.durees['noire'] / 2.
+		self.durees['doublecroche'] = self.durees['croche']/2.
+	
+	def lireAir(self,filename):
+		f = open(filename)
+		air = [tuple(line.strip().split()) for line in f]
+		f.close()
+		return air
+	
+	def jouerMusique(self,filename = None):
 		
 		# Enregistre le signal d'un la 440 dans le fichier signal
 		transition = self.cloche(self.notes['la'])
@@ -51,7 +44,29 @@ class Gamme:
 		for k in xrange(len(transition)):
 			f.write(str(transition[k])+'\n')
 		f.close()
+		#import sys
+		#sys.exit(0)
 		
+		if filename == None:
+			air_notes = [ # au clair de la lune
+				('do','noire'),
+				('do','noire'),
+				('do','noire'),
+				('re','noire'),
+				('mi','blanche'),
+				('re','blanche'),
+				('do','noire'),
+				('mi','noire'),
+				('re','noire'),
+				('re','noire'),
+				('do','noire')
+			]
+		else:
+			air_notes = self.lireAir(filename)
+		
+		# On calcul les signaux à l'avance pour que la lecture soit fluide
+		air_signals = [self.cloche(self.notes[note],self.durees[duree]) for (note,duree) in air_notes]
+		self.play(air_signals,self.fe)
 		
 		wavfile.write('son.wav',self.fe,numpy.array([int(v * 2**15) for v in transition]))
 		self.wavplay(transition,self.fe)
@@ -59,8 +74,6 @@ class Gamme:
 		tfe,tdata = wavfile.read('../ressources/NOTEguitare.wav')
 		tdata2 = [v / 10000. for v in tdata]
 		self.wavplay(tdata2,tfe)
-		#samples=toByte(signal); /* conversion en bytes */
-		#play(samples);
 	
 	def cloche(self, fr, t=None):
 		if t != None:
@@ -79,8 +92,8 @@ class Gamme:
 		f = [v*fr for v in f]
 		tBis = [v*self.t for v in tBis]
 		
-		s = self.synthad(a,f)
-		env = self.envelop(tBis,aBis)
+		s = self.synthad(a,f,taille)
+		env = self.envelop(tBis,aBis, taille)
 		
 		for i in xrange(len(s)):
 			s[i] = s[i]*env[i];
@@ -90,7 +103,7 @@ class Gamme:
 			if abs(v) > maximum:
 				maximum = abs(v)
 			
-		for i in xrange(33076):
+		for i in xrange(taille): # 33076
 			s[i]= (0.99 * s[i]) / maximum
 		
 		print 'max:',maximum
@@ -101,8 +114,8 @@ class Gamme:
 			
 		return s
 		
-	def synthad(self, a, f):
-		n = 33076
+	def synthad(self, a, f, taille):
+		n = taille # 33076
 		dt = 1./self.fe
 		
 		s = [0.0] * n
@@ -114,9 +127,9 @@ class Gamme:
 
 		return s;
 	
-	def envelop(self,tBis, aBis): # fe -> self.fe
+	def envelop(self,tBis, aBis, taille): # fe -> self.fe
 		temp = tBis[-1]
-		n = 33076 # len(th)
+		n = taille #33076 # len(th)
 		dt = 1./self.fe
 
 		th = [i*dt for i in xrange(n)]
@@ -141,7 +154,7 @@ class Gamme:
 			h2 = int( 1 + float(tBis[i+1]/dt) )
 			c = (aBis[i]-aBis[i+1])/(tBis[i]-tBis[i+1]); 
 			b = ((tBis[i]*aBis[i+1])-(tBis[i+1]*aBis[i]))/(tBis[i]-tBis[i+1]);
-			for m in xrange(h1-1,h2):
+			for m in xrange(h1-1,h2-1): # h2 -> h2-1
 				env[m] = c*th[m]+b
 				
 		fw = open('env.txt','w')
@@ -192,18 +205,11 @@ class Gamme:
 		from time import sleep
 		d = audiere.open_device()
 		sons = [d.open_array(buff,fs) for buff in buffs]
-		help(sons[0].play)
 		for son in sons:
 			son.play()
 			while son.playing:
-				sleep(.01)
-		#~ for buff in buffs:
-			#~ s = d.open_array(buff,fs)
-			#~ s.pan = pan
-			#~ s.play()
-			#~ while s.playing:
-				#~ sleep(.01)
-
+				sleep(0.01)
+				
 if __name__ == '__main__':
-	gamme = Gamme(fe=20000)
-	gamme.jouerMusique()
+	gamme = Gamme(fe=8000)
+	gamme.jouerMusique('lune.txt')
