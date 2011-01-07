@@ -12,27 +12,60 @@ class Gamme:
 		self.f0 = f0
 		self.t = t
 		
+		self.notes_names = ['la','si','do','do#','re','re#','mi','fa','fa#','sol','sol#']
+		
+		self.fr = []
+		self.notes = {}
+		for i in xrange(len(self.notes_names)):
+			self.fr.append( self.f0 * (2.0 ** (i/12.0)) ) # Toutes les fréquences en ordre croissant dans une liste
+			self.notes[self.notes_names[i]] = self.fr[i]  # Fréquences des notes, note par note (dans un dico)
+			
 	def jouerMusique(self):
-		fr = []
-		for i in xrange(13):
-			fr.append( self.f0 * (2.0 ** (i/12.0)) )
 		
-		transition = self.cloche(fr[0])
-		signal = []
-		for j in xrange(33076):
-			signal.append( int( (2.0 ** 15.0) * transition[j] ) / 100000. )
+		noire = 0.5
+		blanche = 2*noire
+		ronde = 2*blanche
+		croche = noire/2.
+		double_croche = croche/2.
+		air_notes = [
+			('do',noire),
+			('do',noire),
+			('do',noire),
+			('re',noire),
+			('mi',blanche),
+			('re',blanche),
+			('do',noire),
+			('mi',noire),
+			('re',noire),
+			('re',noire),
+			('do',noire)
+		]
 		
+		# On calcul les signaux à l'avance pour que la lecture soit fluide
+		air_signals = [self.cloche(self.notes[note],duree) for (note,duree) in air_notes]
+		self.play(air_signals,self.fe)
+		
+		# Enregistre le signal d'un la 440 dans le fichier signal
+		transition = self.cloche(self.notes['la'])
 		f = open('signal.txt','w')
-		for k in xrange(len(signal)):
+		for k in xrange(len(transition)):
 			f.write(str(transition[k])+'\n')
 		f.close()
 		
-		wavfile.write('son.wav',self.fe,numpy.array(signal))
-		self.wavplay(signal,self.fe)
+		
+		wavfile.write('son.wav',self.fe,numpy.array([int(v * 2**15) for v in transition]))
+		self.wavplay(transition,self.fe)
+		
+		tfe,tdata = wavfile.read('../ressources/NOTEguitare.wav')
+		tdata2 = [v / 10000. for v in tdata]
+		self.wavplay(tdata2,tfe)
 		#samples=toByte(signal); /* conversion en bytes */
 		#play(samples);
 	
-	def cloche(self, fr): # t -> self.t // fe -> self.fe
+	def cloche(self, fr, t=None):
+		if t != None:
+			self.t,t = t,self.t
+			
 		h = 1./self.fe
 		taille = int(self.t*self.fe)
 		tBis = [0.0, .1, .2, .4, .6, .9, 1.0]
@@ -61,6 +94,11 @@ class Gamme:
 			s[i]= (0.99 * s[i]) / maximum
 		
 		print 'max:',maximum
+		
+		# On redonne sa valeur par défaut à self.t si on l'avait modifiée
+		if t != None:
+			self.t = t
+			
 		return s
 		
 	def synthad(self, a, f):
@@ -146,7 +184,26 @@ class Gamme:
 		s.play()
 		while s.playing:
 			sleep(.01)
+			
+	def play(self,buffs,fs,pan=0):
+		'''Plays a sound buffer with blocking, matlab-style
+		'''
+		import audiere
+		from time import sleep
+		d = audiere.open_device()
+		sons = [d.open_array(buff,fs) for buff in buffs]
+		help(sons[0].play)
+		for son in sons:
+			son.play()
+			while son.playing:
+				sleep(.01)
+		#~ for buff in buffs:
+			#~ s = d.open_array(buff,fs)
+			#~ s.pan = pan
+			#~ s.play()
+			#~ while s.playing:
+				#~ sleep(.01)
 
 if __name__ == '__main__':
-	gamme = Gamme()
+	gamme = Gamme(fe=20000)
 	gamme.jouerMusique()
