@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 
 from Sound import Sound
 
+from Gamme import Gamme
+
 if __name__ == '__main__':
 	
 	son = Sound('../ressources/NOTEguitare.wav')
