@@ -1,0 +1,13 @@
+A PROPOS :
+    Cette application a été réalisée dans le cadre d'un projet de SSII
+(Son, Signal et Image pour l'Informaticien) à l'école d'ingénieurs
+Polytech'Nice - Sophia Antipolis.
+
+AUTEURS :
+    Guy CHAMPOLION (champoll@polytech.unice.fr)
+    François CHAPUIS (fchapuis@polytech.unice.fr)
+    
+INSTALLATION / FONCTIONNALITES :
+    Voir le fichier PDF associé pour avoir des informations
+détaillées sur l'installation et les fonctionnalités de cette
+application.
