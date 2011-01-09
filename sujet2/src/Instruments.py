@@ -13,6 +13,10 @@
 #~ a = [350, 950, 500, 150, 700, 100, 250, 370, 1000, 180, 300, 100,  150,  300,  100,   100,  50,   20,   10,   35,   5,   15]
 
 class Instrument:
+	"""
+	Crée un instrument avec une enveloppe temporelle et une
+	composition fréquentielle données.
+	"""
 	def __init__(self,a,f,aBis,tBis,name):
 		"""
 		tBis/aBis : pour enveloppe
@@ -23,12 +27,25 @@ class Instrument:
 		self.f = f
 		self.aBis = aBis
 		self.tBis = tBis
+		
+		self.synth = None
+		self.env = None
 	
 	def synthad(self, a, f, taille, fe):
+		"""
+		Synthèse additive. Créé un son composé des partiels f(n) d'amplitude a(n).
+		
+		fe : fréquence d'échantillonnage.
+		
+		Retourne la composition fréquentielle obtenue à partir des tableaux
+		a et f.
+		"""
 		from math import pi,sin
 		s = [0.0] * taille
-		th = [i*(1./fe) for i in xrange(taille)]
+		th = [i*(1./fe) for i in xrange(taille)] # Création du vecteur temps discret
 		
+		# Création du son.
+		# Boucle pour ajouter une à une les composantes fréquentielles.
 		for x in xrange(taille):
 			for i in xrange(len(f)):
 				s[x] += a[i] * sin(2 * pi * f[i] * th[x])
@@ -36,6 +53,14 @@ class Instrument:
 		return s
 		
 	def envelop(self,tBis, aBis, taille, fe):
+		"""
+		Retourne l'enveloppe temporelle paramétrée par les tableaux
+		tBis et aBis : le son échantillonné à la fréquence fe,
+		affine par morceaux.
+		
+		tBis : liste d'instants t_k
+		aBis : liste des amplitudes a_k aux instants t_k
+		"""
 		temp = tBis[-1]
 		dt = 1./fe
 
@@ -75,6 +100,13 @@ class Instrument:
 	
 	def signal(self,fr,t=1.5, fe=8000, coeff=1.):
 		"""
+		Multiplie l'enveloppe temporelle et la composition fréquentielle
+		et retourne le signal obtenu.
+		
+		fr : la fréquence de la note à créer.
+		t : la durée du signal à créer
+		fe : fréquence d'échantillonnage
+		
 		coeff: ce coefficient permet
 			- de diminuer le volume du son si il est compris entre 0 et 1
 			- d'appliquer une saturation au son si il est supérieur à 1
@@ -92,6 +124,9 @@ class Instrument:
 		
 		s = self.synthad(a,f,taille,fe)
 		env = self.envelop(tBis,aBis, taille,fe)
+		
+		self.synth = s
+		self.env = env
 
 		for i in xrange(len(s)):
 			s[i] = s[i]*env[i];
@@ -101,6 +136,9 @@ class Instrument:
 		
 		print 'max:',maximum
 		
+		# Normalisation si coeff=1
+		# Saturation si coeff > 1
+		# Diminution du volume si coeff entre 0 et 1
 		for i in xrange(taille):
 			s[i]= (coeff * s[i]) / maximum
 			if s[i] > 1:
@@ -111,6 +149,9 @@ class Instrument:
 		return s
 
 class Cloche(Instrument):
+	"""
+	Créé un instrument qui produit des sons de cloche.
+	"""
 	def __init__(self):
 		tBis = [0.0, .1, .2, .4, .6, .9, 1.0]
 		aBis = [0.0,  .6, 1.0, .4, .2, .1, 0.0]
@@ -119,6 +160,9 @@ class Cloche(Instrument):
 		Instrument.__init__(self,a,f,aBis,tBis,'cloche')
 
 class Flute(Instrument):
+	"""
+	Créé un instrument qui produit des sons de flute.
+	"""
 	def __init__(self):
 		tBis = [0, 0.1, 0.2, 0.9, 1]
 		aBis = [0, 0.8, 1, 0.8, 0]
