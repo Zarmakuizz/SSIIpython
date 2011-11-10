@@ -1,6 +1,6 @@
-fa croche
-la croche
-si noire
-fa croche
-la croche
-si noire
+fa3 croche
+la3 croche
+si3 noire
+fa3 croche
+la3 croche
+si3 noire

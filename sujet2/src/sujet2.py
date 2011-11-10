@@ -150,7 +150,7 @@ class Sujet2:
 			'3' : self.stop
 		}
 		
-		print 'Jouer des notes en ligne de commande...'
+		#print "Jouer des notes en ligne de commande..."
 		print "1. Par fréquence (440, 520...)"
 		print "2. Par nom (la3, do#3...)"
 		print "3. Quitter"

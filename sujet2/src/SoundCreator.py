@@ -142,6 +142,7 @@ class SoundCreator:
 		"""
 		import audiere
 		from time import sleep
+                print audiere.get_devices()
 		d = audiere.open_device()
 		s = d.open_array(buff,fs)
 		s.pan = pan
@@ -157,6 +158,7 @@ class SoundCreator:
 		"""
 		import audiere
 		from time import sleep
+                print audiere.get_devices()
 		d = audiere.open_device()
 		sons = [d.open_array(buff,fs) for buff in buffs]
 		for son in sons:
